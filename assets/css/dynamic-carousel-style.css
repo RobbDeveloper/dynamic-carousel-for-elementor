@@ -1,0 +1,238 @@
+/**
+ * Dynamic Carousel Widget Styles
+ * File: dynamic-carousel-style.css
+ */
+
+.dynamic-carousel-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.dynamic-carousel-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.dynamic-carousel-track {
+    display: flex;
+    transition: transform 0.5s ease;
+    will-change: transform;
+}
+
+.dynamic-carousel-slide {
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.carousel-slide-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+}
+
+.carousel-slide-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Image Slides */
+.carousel-slide-image {
+    background: #000;
+}
+
+.carousel-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Video Slides */
+.carousel-slide-video {
+    background: #000;
+    position: relative;
+}
+
+.carousel-video-iframe,
+.carousel-video {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Template Slides */
+.carousel-slide-template {
+    width: 100%;
+    height: 100%;
+}
+
+/* Navigation Arrows */
+.carousel-navigation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.carousel-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+    pointer-events: all;
+    z-index: 10;
+}
+
+.carousel-arrow svg,
+.carousel-arrow i {
+    display: block;
+    transition: all 0.3s ease;
+}
+
+.carousel-arrow svg {
+    width: 50%;
+    height: 50%;
+}
+
+.carousel-arrow i {
+    font-size: 50%;
+}
+
+.carousel-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.carousel-arrow:not(:disabled):hover {
+    transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-arrow:not(:disabled):active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+.carousel-arrow-left {
+    left: 20px;
+}
+
+.carousel-arrow-right {
+    right: 20px;
+}
+
+/* Pagination Dots */
+.carousel-pagination {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.carousel-dot {
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    pointer-events: all;
+    padding: 0;
+}
+
+.carousel-dot:hover {
+    transition: all 0.3s ease;
+}
+
+.carousel-dot.active {
+    transition: all 0.3s ease;
+}
+
+/* Touch/Drag Functionality */
+.dynamic-carousel-wrapper.grabbing {
+    cursor: grabbing;
+}
+
+.dynamic-carousel-wrapper.grabbing .dynamic-carousel-track {
+    transition: none;
+}
+
+/* Responsive Helper Classes */
+@media (max-width: 1024px) {
+    .carousel-arrow {
+        opacity: 0.9;
+    }
+}
+
+@media (max-width: 768px) {
+    .carousel-arrow-left {
+        left: 10px;
+    }
+    
+    .carousel-arrow-right {
+        right: 10px;
+    }
+    
+    .carousel-pagination {
+        bottom: 10px;
+    }
+}
+
+/* Loading State */
+.dynamic-carousel-wrapper.loading .dynamic-carousel-slide {
+    opacity: 0.5;
+}
+
+/* Animation Classes */
+.carousel-slide-entering {
+    animation: slideIn 0.5s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Accessibility */
+.carousel-arrow:focus,
+.carousel-dot:focus {
+    outline: 2px solid #4a90e2;
+    outline-offset: 2px;
+}
+
+/* RTL Support */
+[dir="rtl"] .dynamic-carousel-track {
+    direction: ltr;
+}
+
+[dir="rtl"] .carousel-arrow-left {
+    left: auto;
+    right: 20px;
+}
+
+[dir="rtl"] .carousel-arrow-right {
+    right: auto;
+    left: 20px;
+}
