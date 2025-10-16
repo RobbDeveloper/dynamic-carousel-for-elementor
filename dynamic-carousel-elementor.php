@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Dynamic Carousel Widget for Elementor
  * Description: A fully customizable carousel widget supporting images, videos, and Elementor templates with dynamic widths
- * Version: 1.0.0
+ * Version: 1.0.1
  * Author: Robb Developer
  * Text Domain: elementor-custom-widgets
  * Requires PHP: 7.0
