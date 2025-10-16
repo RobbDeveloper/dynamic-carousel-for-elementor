@@ -282,6 +282,32 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             ]
         );
 
+        $repeater->add_control(
+            'video_autoplay',
+            [
+                'label' => __('Autoplay Video', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SWITCHER,
+                'return_value' => 'yes',
+                'default' => 'no',
+                'condition' => ['slide_type' => 'video'],
+            ]
+        );
+
+        $repeater->add_control(
+            'video_mute',
+            [
+                'label' => __('Mute Video', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SWITCHER,
+                'return_value' => 'yes',
+                'default' => 'yes',
+                'description' => __('Most browsers require videos to be muted for autoplay', 'elementor-custom-widgets'),
+                'condition' => [
+                    'slide_type' => 'video',
+                    'video_autoplay' => 'yes',
+                ],
+            ]
+        );
+
         // Template Controls
         $repeater->add_control(
             'template_id',
@@ -991,6 +1017,8 @@ class Dynamic_Carousel_Widget extends Widget_Base {
 
     protected function render_video_slide($slide) {
         $video_type = isset($slide['video_type']) ? $slide['video_type'] : 'youtube';
+        $autoplay = isset($slide['video_autoplay']) && $slide['video_autoplay'] === 'yes';
+        $mute = isset($slide['video_mute']) && $slide['video_mute'] === 'yes';
         ?>
         <div class="carousel-slide-content carousel-slide-video">
             <?php
@@ -1006,6 +1034,17 @@ class Dynamic_Carousel_Widget extends Widget_Base {
 
                         $embed_url = $this->get_youtube_embed_url($youtube_url);
                         if ($embed_url) {
+                            // Add autoplay and mute parameters
+                            $params = [];
+                            if ($autoplay) {
+                                $params[] = 'autoplay=1';
+                                if ($mute) {
+                                    $params[] = 'mute=1';
+                                }
+                            }
+                            if (!empty($params)) {
+                                $embed_url .= '?' . implode('&', $params);
+                            }
                             ?>
                             <iframe
                                 src="<?php echo esc_url($embed_url); ?>"
@@ -1030,6 +1069,17 @@ class Dynamic_Carousel_Widget extends Widget_Base {
 
                         $embed_url = $this->get_vimeo_embed_url($vimeo_url);
                         if ($embed_url) {
+                            // Add autoplay and mute parameters
+                            $params = [];
+                            if ($autoplay) {
+                                $params[] = 'autoplay=1';
+                                if ($mute) {
+                                    $params[] = 'muted=1';
+                                }
+                            }
+                            if (!empty($params)) {
+                                $embed_url .= '?' . implode('&', $params);
+                            }
                             ?>
                             <iframe
                                 src="<?php echo esc_url($embed_url); ?>"
@@ -1058,8 +1108,17 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                     }
 
                     if ($video_url) {
+                        $video_attrs = ['controls', 'class="carousel-video"', 'controlsList="nodownload"'];
+                        if ($autoplay) {
+                            $video_attrs[] = 'autoplay';
+                            $video_attrs[] = 'loop';
+                            $video_attrs[] = 'playsinline';
+                            if ($mute) {
+                                $video_attrs[] = 'muted';
+                            }
+                        }
                         ?>
-                        <video controls class="carousel-video" controlsList="nodownload">
+                        <video <?php echo implode(' ', $video_attrs); ?>>
                             <source src="<?php echo esc_url($video_url); ?>" type="video/mp4">
                             <?php esc_html_e('Your browser does not support the video tag.', 'elementor-custom-widgets'); ?>
                         </video>
