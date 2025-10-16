@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) exit;
 
 final class Dynamic_Carousel_Elementor {
 
-    const VERSION = '1.0.0';
+    const VERSION = '1.0.1';
     const MINIMUM_ELEMENTOR_VERSION = '3.0.0';
     const MINIMUM_PHP_VERSION = '7.0';
 
