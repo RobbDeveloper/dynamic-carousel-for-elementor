@@ -740,14 +740,11 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             return;
         }
 
-        $carousel_id = 'carousel-' . $this->get_id();
-
-        // Build selector matching Elementor's {{WRAPPER}} pattern
-        $wrapper_selector = '.elementor-element.elementor-element-' . $this->get_id();
         $post_id = get_the_ID();
-        if ($post_id) {
-            $wrapper_selector = '.post-' . $post_id . ' ' . $wrapper_selector;
-        }
+        $carousel_id = 'carousel-' . $this->get_id() . '-' . $post_id;
+
+        // Build unique selector for this specific carousel instance
+        $wrapper_selector = '#' . $carousel_id;
 
         // Get responsive slide spacing - default to 20px if not set
         $slide_spacing = isset($settings['slide_spacing']['size']) ? $settings['slide_spacing'] : ['size' => 20, 'unit' => 'px'];
