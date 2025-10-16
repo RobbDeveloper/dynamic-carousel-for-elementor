@@ -856,8 +856,26 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                 <?php echo esc_attr($wrapper_selector); ?> .carousel-dot.active {
                     background-color: <?php echo esc_attr($settings['dots_active_color']); ?>;
                 }
-            <?php endif;
+            <?php endif; ?>
 
+            /* Fix aspect ratio for all slides - use CSS aspect-ratio to maintain correct proportions */
+            <?php echo esc_attr($wrapper_selector); ?> .dynamic-carousel-slide {
+                width: auto !important;
+            }
+            <?php echo esc_attr($wrapper_selector); ?> .dynamic-carousel-slide .carousel-slide-content {
+                width: 100%;
+                height: 100%;
+                display: block;
+            }
+            <?php echo esc_attr($wrapper_selector); ?> .carousel-image,
+            <?php echo esc_attr($wrapper_selector); ?> .carousel-video,
+            <?php echo esc_attr($wrapper_selector); ?> .carousel-video-iframe {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            <?php
             // Mobile full width slides with aspect ratio
             if ($mobile_full_width) :
                 $ratio_map = [
@@ -885,13 +903,6 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                         width: 100%;
                         height: 100%;
                     }
-                    <?php echo esc_attr($wrapper_selector); ?> .carousel-image,
-                    <?php echo esc_attr($wrapper_selector); ?> .carousel-video,
-                    <?php echo esc_attr($wrapper_selector); ?> .carousel-video-iframe {
-                        width: 100%;
-                        height: 100%;
-                        object-fit: cover;
-                    }
                 }
             <?php endif; ?>
         </style>
@@ -899,21 +910,40 @@ class Dynamic_Carousel_Widget extends Widget_Base {
         <div class="dynamic-carousel-wrapper" id="<?php echo esc_attr($carousel_id); ?>" data-settings='<?php echo wp_json_encode($carousel_settings); ?>'>
             <div class="dynamic-carousel-container">
                 <div class="dynamic-carousel-track">
-                    <?php foreach ($processed_slides as $index => $slide) : 
-                        $slide_width = $this->calculate_slide_width($slide, $settings);
-                        $slide_styles = [];
-                        
-                        if ($slide_width) {
-                            $slide_styles[] = 'width: ' . $slide_width;
+                    <?php foreach ($processed_slides as $index => $slide) :
+                        // Get aspect ratio for CSS
+                        $aspect_ratio_key = $slide['slide_type'] === 'image' ? 'image_aspect_ratio' : 'video_aspect_ratio';
+                        $custom_ratio_key = $slide['slide_type'] === 'image' ? 'image_custom_ratio' : 'video_custom_ratio';
+                        $aspect_ratio_setting = isset($slide[$aspect_ratio_key]) ? $slide[$aspect_ratio_key] : '16-9';
+
+                        // Calculate aspect ratio value
+                        if ($aspect_ratio_setting === 'original' && isset($slide['image']['id'])) {
+                            $image_id = $slide['image']['id'];
+                            $image_meta = wp_get_attachment_metadata($image_id);
+                            if ($image_meta && isset($image_meta['width']) && isset($image_meta['height']) && $image_meta['height'] > 0) {
+                                $aspect_ratio_value = $image_meta['width'] / $image_meta['height'];
+                            } else {
+                                $aspect_ratio_value = 16/9;
+                            }
+                        } else {
+                            $ratio_map = ['1-1' => 1, '2-3' => 2/3, '3-2' => 3/2, '4-3' => 4/3, '16-9' => 16/9, '21-9' => 21/9];
+                            if ($aspect_ratio_setting === 'custom' && isset($slide[$custom_ratio_key])) {
+                                $aspect_ratio_value = floatval($slide[$custom_ratio_key]);
+                            } else {
+                                $aspect_ratio_value = isset($ratio_map[$aspect_ratio_setting]) ? $ratio_map[$aspect_ratio_setting] : 16/9;
+                            }
                         }
-                        
+
+                        $slide_styles = [];
+                        $slide_styles[] = 'aspect-ratio: ' . $aspect_ratio_value;
+
                         if ($index < count($processed_slides) - 1) {
                             $slide_styles[] = 'margin-right: ' . $slide_spacing['size'] . $slide_spacing['unit'];
                         }
-                        
-                        $style_attr = !empty($slide_styles) ? 'style="' . esc_attr(implode('; ', $slide_styles)) . '"' : '';
+
+                        $style_attr = 'style="' . esc_attr(implode('; ', $slide_styles)) . '"';
                         ?>
-                        
+
                         <div class="dynamic-carousel-slide" data-slide-index="<?php echo esc_attr($index); ?>" <?php echo $style_attr; ?>>
                             <?php
                             if (isset($slide['slide_type']) && $slide['slide_type'] === 'placeholder') {
