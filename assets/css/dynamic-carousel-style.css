@@ -74,6 +74,10 @@
     height: 100%;
 }
 
+.carousel-slide-template [data-elementor-post-type="elementor_library"]{
+    width: 100%;
+}
+
 /* Navigation Arrows */
 .carousel-navigation {
     position: absolute;
