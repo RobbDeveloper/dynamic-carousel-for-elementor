@@ -450,6 +450,35 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             ]
         );
 
+        $this->add_control(
+            'mobile_full_width',
+            [
+                'label' => __('Mobile Full Width Slides', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SWITCHER,
+                'return_value' => 'yes',
+                'default' => 'no',
+                'description' => __('Make slides full width on mobile with constrained aspect ratio', 'elementor-custom-widgets'),
+            ]
+        );
+
+        $this->add_control(
+            'mobile_aspect_ratio',
+            [
+                'label' => __('Mobile Aspect Ratio', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SELECT,
+                'default' => '4-3',
+                'options' => [
+                    '1-1' => '1:1',
+                    '2-3' => '2:3',
+                    '3-2' => '3:2',
+                    '4-3' => '4:3',
+                    '16-9' => '16:9',
+                    '21-9' => '21:9',
+                ],
+                'condition' => ['mobile_full_width' => 'yes'],
+            ]
+        );
+
         $this->end_controls_section();
 
         // Navigation Style
@@ -800,7 +829,11 @@ class Dynamic_Carousel_Widget extends Widget_Base {
 
         $processed_slides = $this->process_slides($slides, $settings);
 
-        // Output inline styles for dynamic colors
+        // Check if mobile full width is enabled
+        $mobile_full_width = isset($settings['mobile_full_width']) && $settings['mobile_full_width'] === 'yes';
+        $mobile_aspect_ratio = isset($settings['mobile_aspect_ratio']) ? $settings['mobile_aspect_ratio'] : '4-3';
+
+        // Output inline styles for dynamic colors and mobile full width
         ?>
         <style>
             <?php
@@ -822,6 +855,43 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             if (!empty($settings['dots_active_color'])) : ?>
                 <?php echo esc_attr($wrapper_selector); ?> .carousel-dot.active {
                     background-color: <?php echo esc_attr($settings['dots_active_color']); ?>;
+                }
+            <?php endif;
+
+            // Mobile full width slides with aspect ratio
+            if ($mobile_full_width) :
+                $ratio_map = [
+                    '1-1' => 1,
+                    '2-3' => 2/3,
+                    '3-2' => 3/2,
+                    '4-3' => 4/3,
+                    '16-9' => 16/9,
+                    '21-9' => 21/9,
+                ];
+                $ratio = isset($ratio_map[$mobile_aspect_ratio]) ? $ratio_map[$mobile_aspect_ratio] : 4/3;
+                $padding_bottom = (1 / $ratio) * 100;
+                ?>
+                @media (max-width: 767px) {
+                    <?php echo esc_attr($wrapper_selector); ?> .dynamic-carousel-slide {
+                        width: 100% !important;
+                        height: auto !important;
+                        position: relative;
+                        padding-bottom: <?php echo esc_attr($padding_bottom); ?>%;
+                    }
+                    <?php echo esc_attr($wrapper_selector); ?> .dynamic-carousel-slide .carousel-slide-content {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                    }
+                    <?php echo esc_attr($wrapper_selector); ?> .carousel-image,
+                    <?php echo esc_attr($wrapper_selector); ?> .carousel-video,
+                    <?php echo esc_attr($wrapper_selector); ?> .carousel-video-iframe {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
                 }
             <?php endif; ?>
         </style>
