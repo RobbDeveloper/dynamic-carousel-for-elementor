@@ -742,6 +742,14 @@ class Dynamic_Carousel_Widget extends Widget_Base {
 
         $carousel_id = 'carousel-' . $this->get_id();
 
+        // Build selector with post class if available
+        $wrapper_selector = '';
+        $post_id = get_the_ID();
+        if ($post_id) {
+            $wrapper_selector .= '.post-' . $post_id . ' ';
+        }
+        $wrapper_selector .= '.elementor-element-' . $this->get_id();
+
         // Get responsive slide spacing - default to 20px if not set
         $slide_spacing = isset($settings['slide_spacing']['size']) ? $settings['slide_spacing'] : ['size' => 20, 'unit' => 'px'];
 
@@ -757,8 +765,33 @@ class Dynamic_Carousel_Widget extends Widget_Base {
         ];
 
         $processed_slides = $this->process_slides($slides, $settings);
+
+        // Output inline styles for dynamic colors
         ?>
-        
+        <style>
+            <?php
+            // Dots normal color
+            if (!empty($settings['dots_color'])) : ?>
+                <?php echo esc_attr($wrapper_selector); ?> .carousel-dot {
+                    background-color: <?php echo esc_attr($settings['dots_color']); ?>;
+                }
+            <?php endif;
+
+            // Dots hover color
+            if (!empty($settings['dots_hover_color'])) : ?>
+                <?php echo esc_attr($wrapper_selector); ?> .carousel-dot:hover {
+                    background-color: <?php echo esc_attr($settings['dots_hover_color']); ?>;
+                }
+            <?php endif;
+
+            // Dots active color
+            if (!empty($settings['dots_active_color'])) : ?>
+                <?php echo esc_attr($wrapper_selector); ?> .carousel-dot.active {
+                    background-color: <?php echo esc_attr($settings['dots_active_color']); ?>;
+                }
+            <?php endif; ?>
+        </style>
+
         <div class="dynamic-carousel-wrapper" id="<?php echo esc_attr($carousel_id); ?>" data-settings='<?php echo wp_json_encode($carousel_settings); ?>'>
             <div class="dynamic-carousel-container">
                 <div class="dynamic-carousel-track">
