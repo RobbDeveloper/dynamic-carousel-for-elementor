@@ -136,6 +136,18 @@ class Dynamic_Carousel_Widget extends Widget_Base {
         );
 
         $repeater->add_control(
+            'acf_gallery_field_mobile',
+            [
+                'label' => __('ACF Gallery Field Name (Mobile)', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::TEXT,
+                'dynamic' => ['active' => true],
+                'placeholder' => __('mobile_gallery_field_name', 'elementor-custom-widgets'),
+                'description' => __('Optional: Use different gallery for mobile devices', 'elementor-custom-widgets'),
+                'condition' => ['slide_type' => 'acf_gallery'],
+            ]
+        );
+
+        $repeater->add_control(
             'acf_gallery_aspect_ratio',
             [
                 'label' => __('Gallery Images Aspect Ratio', 'elementor-custom-widgets'),
@@ -959,7 +971,13 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             return [];
         }
 
+        // Check if mobile and mobile field is set
+        $is_mobile = wp_is_mobile();
         $field_name = $slide['acf_gallery_field'];
+
+        if ($is_mobile && !empty($slide['acf_gallery_field_mobile'])) {
+            $field_name = $slide['acf_gallery_field_mobile'];
+        }
 
         // Get current post ID for dynamic content
         $post_id = get_the_ID();
