@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Dynamic Carousel Widget for Elementor
  * Description: A fully customizable carousel widget supporting images, videos, and Elementor templates with dynamic widths
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: Robb Developer
  * Text Domain: elementor-custom-widgets
  * Requires PHP: 7.0
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) exit;
 
 final class Dynamic_Carousel_Elementor {
 
-    const VERSION = '1.0.3';
+    const VERSION = '1.0.4';
     const MINIMUM_ELEMENTOR_VERSION = '3.0.0';
     const MINIMUM_PHP_VERSION = '7.0';
 
@@ -54,9 +54,13 @@ final class Dynamic_Carousel_Elementor {
 
         // Register Widget Scripts
         add_action('elementor/frontend/after_register_scripts', [$this, 'register_frontend_scripts']);
-        
+
         // Register Widget Styles
         add_action('elementor/frontend/after_register_styles', [$this, 'register_frontend_styles']);
+
+        // AJAX handler for uploading video posters
+        add_action('wp_ajax_carousel_upload_video_poster', [$this, 'ajax_upload_video_poster']);
+        add_action('wp_ajax_nopriv_carousel_upload_video_poster', [$this, 'ajax_upload_video_poster']);
     }
 
     public function admin_notice_missing_main_plugin() {
@@ -110,6 +114,12 @@ final class Dynamic_Carousel_Elementor {
             self::VERSION,
             true
         );
+
+        // Localize script with AJAX URL and nonce
+        wp_localize_script('dynamic-carousel-script', 'carouselAjax', [
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('carousel_video_poster_nonce')
+        ]);
     }
 
     public function register_frontend_styles() {
@@ -119,6 +129,72 @@ final class Dynamic_Carousel_Elementor {
             [],
             self::VERSION
         );
+    }
+
+    public function ajax_upload_video_poster() {
+        // Verify nonce
+        check_ajax_referer('carousel_video_poster_nonce', 'nonce');
+
+        // Check if file was uploaded
+        if (!isset($_FILES['poster_image'])) {
+            wp_send_json_error(['message' => 'No image file uploaded']);
+            return;
+        }
+
+        $video_slug = sanitize_title($_POST['video_slug'] ?? '');
+        if (empty($video_slug)) {
+            wp_send_json_error(['message' => 'Invalid video slug']);
+            return;
+        }
+
+        // Handle file upload
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+
+        $file = $_FILES['poster_image'];
+        $upload_overrides = [
+            'test_form' => false,
+            'test_type' => false
+        ];
+
+        // Move uploaded file
+        $movefile = wp_handle_upload($file, $upload_overrides);
+
+        if (isset($movefile['error'])) {
+            wp_send_json_error(['message' => $movefile['error']]);
+            return;
+        }
+
+        // Prepare attachment data
+        $filename = $video_slug . '-poster.webp';
+        $attachment = [
+            'guid' => $movefile['url'],
+            'post_mime_type' => $movefile['type'],
+            'post_title' => sanitize_file_name($video_slug) . ' Poster',
+            'post_content' => '',
+            'post_status' => 'inherit',
+            'post_name' => $video_slug . '-poster'
+        ];
+
+        // Insert attachment
+        $attachment_id = wp_insert_attachment($attachment, $movefile['file']);
+
+        if (is_wp_error($attachment_id)) {
+            wp_send_json_error(['message' => 'Failed to create attachment']);
+            return;
+        }
+
+        // Generate metadata
+        $attach_data = wp_generate_attachment_metadata($attachment_id, $movefile['file']);
+        wp_update_attachment_metadata($attachment_id, $attach_data);
+
+        $poster_url = wp_get_attachment_url($attachment_id);
+
+        wp_send_json_success([
+            'url' => $poster_url,
+            'attachment_id' => $attachment_id
+        ]);
     }
 }
 

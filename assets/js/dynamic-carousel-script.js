@@ -33,6 +33,9 @@
             this.bindEvents();
             this.updateCarousel();
 
+            // Generate video posters for videos that need client-side generation
+            this.generateVideoPosters();
+
             // Apply transition speed from settings
             if (this.settings.transitionSpeed) {
                 this.$track.css('transition', `transform ${this.settings.transitionSpeed}ms ease`);
@@ -49,6 +52,92 @@
             }, 250);
 
             $(window).on('resize', resizeHandler);
+        }
+
+        generateVideoPosters() {
+            // Find all video elements that need poster generation
+            this.$wrapper.find('video[data-generate-poster]').each((index, videoElement) => {
+                const $video = $(videoElement);
+                const posterData = $video.attr('data-generate-poster');
+
+                if (!posterData) return;
+
+                try {
+                    const data = JSON.parse(atob(posterData));
+                    this.generatePosterFromVideo($video, data.video_url, data.video_slug);
+                } catch (e) {
+                    console.error('Failed to parse poster data:', e);
+                }
+            });
+        }
+
+        generatePosterFromVideo($video, videoUrl, videoSlug) {
+            const video = $video[0];
+
+            // Wait for video metadata to load
+            const handleLoadedMetadata = () => {
+                // Seek to 1 second
+                video.currentTime = 1.0;
+            };
+
+            const handleSeeked = () => {
+                // Create canvas and capture frame
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Convert to blob and set as poster
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const posterUrl = URL.createObjectURL(blob);
+                        video.poster = posterUrl;
+
+                        // Optional: Upload to server via AJAX
+                        this.uploadPosterToServer(blob, videoSlug, videoUrl);
+                    }
+                }, 'image/webp', 0.85);
+
+                // Clean up event listeners
+                video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+                video.removeEventListener('seeked', handleSeeked);
+            };
+
+            // Add event listeners
+            video.addEventListener('loadedmetadata', handleLoadedMetadata);
+            video.addEventListener('seeked', handleSeeked);
+
+            // Load video
+            video.load();
+        }
+
+        uploadPosterToServer(blob, videoSlug, videoUrl) {
+            // Create FormData for upload
+            const formData = new FormData();
+            formData.append('action', 'carousel_upload_video_poster');
+            formData.append('video_slug', videoSlug);
+            formData.append('video_url', videoUrl);
+            formData.append('poster_image', blob, `${videoSlug}-poster.webp`);
+            formData.append('nonce', carouselAjax?.nonce || '');
+
+            // Upload via AJAX
+            $.ajax({
+                url: carouselAjax?.ajaxurl || '/wp-admin/admin-ajax.php',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: (response) => {
+                    if (response.success) {
+                        console.log('Poster uploaded successfully:', response.data.url);
+                    }
+                },
+                error: (xhr, status, error) => {
+                    console.error('Failed to upload poster:', error);
+                }
+            });
         }
 
         calculateSlidePositions() {

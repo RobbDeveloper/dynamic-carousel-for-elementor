@@ -1261,8 +1261,12 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                     if ($video_url) {
                         $video_attrs = ['controls', 'class="carousel-video"', 'controlsList="nodownload"', 'preload="metadata"'];
 
-                        // Add poster attribute for hosted videos
-                        if ($poster_url) {
+                        // Handle poster URL - check if it's a JS generation marker
+                        if ($poster_url && strpos($poster_url, 'js-generate:') === 0) {
+                            // Add data attribute for JS to handle
+                            $video_attrs[] = 'data-generate-poster="' . esc_attr(substr($poster_url, 12)) . '"';
+                        } elseif ($poster_url) {
+                            // Normal poster URL
                             $video_attrs[] = 'poster="' . esc_url($poster_url) . '"';
                         }
 
@@ -1349,12 +1353,270 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                 break;
 
             case 'hosted':
-                // For hosted videos, we can't easily extract a frame without server-side processing
-                // Return null for now, browser will handle it
+                $video_url = '';
+
+                if (!empty($slide['hosted_video']['url'])) {
+                    $video_url = $slide['hosted_video']['url'];
+                } elseif (!empty($slide['hosted_video_url'])) {
+                    $video_url = $slide['hosted_video_url'];
+                }
+
+                // Support ACF dynamic tags
+                if ($video_url && strpos($video_url, '[elementor-') !== false) {
+                    $video_url = do_shortcode($video_url);
+                }
+
+                if ($video_url) {
+                    return $this->get_hosted_video_poster($video_url);
+                }
                 return null;
         }
 
         return null;
+    }
+
+    protected function get_hosted_video_poster($video_url) {
+        // Create a unique slug from the video URL
+        $video_slug = sanitize_title(basename(parse_url($video_url, PHP_URL_PATH)));
+        $video_slug = preg_replace('/\.(mp4|mov|avi|wmv|flv|webm)$/i', '', $video_slug);
+
+        // Check if poster image already exists in media library
+        $existing_poster = $this->find_existing_poster($video_slug);
+        if ($existing_poster) {
+            return $existing_poster;
+        }
+
+        // Try different methods to generate poster
+        // Method 1: FFmpeg (best quality, most reliable)
+        if ($this->is_ffmpeg_available()) {
+            $poster = $this->generate_video_poster_ffmpeg($video_url, $video_slug);
+            if ($poster) {
+                return $poster;
+            }
+        }
+
+        // Method 2: Imagick (good quality, requires PHP extension)
+        if ($this->is_imagick_available()) {
+            $poster = $this->generate_video_poster_imagick($video_url, $video_slug);
+            if ($poster) {
+                return $poster;
+            }
+        }
+
+        // Method 3: Use browser-side generation via JavaScript
+        // Return a special marker that JS will handle
+        return 'js-generate:' . base64_encode(json_encode([
+            'video_url' => $video_url,
+            'video_slug' => $video_slug
+        ]));
+    }
+
+    protected function find_existing_poster($video_slug) {
+        global $wpdb;
+
+        // Search for media with matching slug and webp extension
+        $query = $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts}
+            WHERE post_type = 'attachment'
+            AND post_mime_type = 'image/webp'
+            AND post_name = %s
+            LIMIT 1",
+            $video_slug . '-poster'
+        );
+
+        $attachment_id = $wpdb->get_var($query);
+
+        if ($attachment_id) {
+            $image_url = wp_get_attachment_url($attachment_id);
+            if ($image_url) {
+                return $image_url;
+            }
+        }
+
+        return null;
+    }
+
+    protected function is_ffmpeg_available() {
+        // Check if exec is disabled
+        if (!function_exists('exec')) {
+            return false;
+        }
+
+        // Check if shell_exec is disabled
+        $disabled_functions = explode(',', ini_get('disable_functions'));
+        if (in_array('exec', $disabled_functions) || in_array('shell_exec', $disabled_functions)) {
+            return false;
+        }
+
+        // Try to detect FFmpeg
+        $output = [];
+        $return_var = 0;
+        @exec('ffmpeg -version 2>&1', $output, $return_var);
+
+        return $return_var === 0 || $return_var === 1;
+    }
+
+    protected function is_imagick_available() {
+        return extension_loaded('imagick') && class_exists('Imagick');
+    }
+
+    protected function generate_video_poster_ffmpeg($video_url, $video_slug) {
+        // Create temporary directory if it doesn't exist
+        $upload_dir = wp_upload_dir();
+        $temp_dir = $upload_dir['basedir'] . '/carousel-video-posters-temp';
+
+        if (!file_exists($temp_dir)) {
+            wp_mkdir_p($temp_dir);
+        }
+
+        // Generate unique filename
+        $temp_video_path = $temp_dir . '/' . md5($video_url) . '.mp4';
+        $temp_poster_path = $temp_dir . '/' . $video_slug . '-poster.webp';
+
+        // Download video temporarily (first 5 seconds only to save bandwidth/space)
+        $video_content = wp_remote_get($video_url, [
+            'timeout' => 30,
+            'headers' => ['Range' => 'bytes=0-5242880'] // First ~5MB
+        ]);
+
+        if (is_wp_error($video_content)) {
+            return null;
+        }
+
+        file_put_contents($temp_video_path, wp_remote_retrieve_body($video_content));
+
+        // Extract frame at 1 second using FFmpeg
+        $command = sprintf(
+            'ffmpeg -i %s -ss 00:00:01.000 -vframes 1 -vf scale=-2:720 %s 2>&1',
+            escapeshellarg($temp_video_path),
+            escapeshellarg($temp_poster_path)
+        );
+
+        $output = [];
+        $return_var = 0;
+        @exec($command, $output, $return_var);
+
+        // Clean up temporary video file
+        @unlink($temp_video_path);
+
+        // Check if poster was generated successfully
+        if (!file_exists($temp_poster_path)) {
+            return null;
+        }
+
+        // Upload to WordPress media library
+        $poster_url = $this->upload_poster_to_media_library($temp_poster_path, $video_slug);
+
+        // Clean up temporary poster file
+        @unlink($temp_poster_path);
+
+        return $poster_url;
+    }
+
+    protected function generate_video_poster_imagick($video_url, $video_slug) {
+        // Create temporary directory if it doesn't exist
+        $upload_dir = wp_upload_dir();
+        $temp_dir = $upload_dir['basedir'] . '/carousel-video-posters-temp';
+
+        if (!file_exists($temp_dir)) {
+            wp_mkdir_p($temp_dir);
+        }
+
+        // Generate unique filename
+        $temp_video_path = $temp_dir . '/' . md5($video_url) . '.mp4';
+        $temp_poster_path = $temp_dir . '/' . $video_slug . '-poster.webp';
+
+        // Download video temporarily (first 5MB)
+        $video_content = wp_remote_get($video_url, [
+            'timeout' => 30,
+            'headers' => ['Range' => 'bytes=0-5242880']
+        ]);
+
+        if (is_wp_error($video_content)) {
+            return null;
+        }
+
+        file_put_contents($temp_video_path, wp_remote_retrieve_body($video_content));
+
+        try {
+            // Use Imagick to extract first frame
+            $imagick = new \Imagick();
+            $imagick->setResolution(1280, 720);
+            $imagick->readImage($temp_video_path . '[0]'); // Read first frame
+
+            // Convert to WebP
+            $imagick->setImageFormat('webp');
+            $imagick->setImageCompressionQuality(85);
+
+            // Resize to 720p maintaining aspect ratio
+            $imagick->scaleImage(0, 720);
+
+            // Write to file
+            $imagick->writeImage($temp_poster_path);
+            $imagick->clear();
+            $imagick->destroy();
+
+            // Clean up temporary video file
+            @unlink($temp_video_path);
+
+            // Check if poster was generated successfully
+            if (!file_exists($temp_poster_path)) {
+                return null;
+            }
+
+            // Upload to WordPress media library
+            $poster_url = $this->upload_poster_to_media_library($temp_poster_path, $video_slug);
+
+            // Clean up temporary poster file
+            @unlink($temp_poster_path);
+
+            return $poster_url;
+
+        } catch (\Exception $e) {
+            // Clean up on error
+            @unlink($temp_video_path);
+            @unlink($temp_poster_path);
+            return null;
+        }
+    }
+
+    protected function upload_poster_to_media_library($file_path, $video_slug) {
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+
+        $filename = $video_slug . '-poster.webp';
+        $upload_dir = wp_upload_dir();
+        $destination = $upload_dir['path'] . '/' . $filename;
+
+        // Copy file to uploads directory
+        if (!copy($file_path, $destination)) {
+            return null;
+        }
+
+        // Prepare attachment data
+        $filetype = wp_check_filetype($filename, null);
+        $attachment = [
+            'guid' => $upload_dir['url'] . '/' . basename($filename),
+            'post_mime_type' => $filetype['type'],
+            'post_title' => sanitize_file_name($video_slug) . ' Poster',
+            'post_content' => '',
+            'post_status' => 'inherit',
+            'post_name' => $video_slug . '-poster'
+        ];
+
+        // Insert attachment
+        $attachment_id = wp_insert_attachment($attachment, $destination);
+
+        if (is_wp_error($attachment_id)) {
+            return null;
+        }
+
+        // Generate metadata
+        $attach_data = wp_generate_attachment_metadata($attachment_id, $destination);
+        wp_update_attachment_metadata($attachment_id, $attach_data);
+
+        return wp_get_attachment_url($attachment_id);
     }
 
     protected function render_template_slide($slide) {
