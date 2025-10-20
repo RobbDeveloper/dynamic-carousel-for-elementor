@@ -1157,6 +1157,11 @@ class Dynamic_Carousel_Widget extends Widget_Base {
     }
 
     protected function render_video_slide($slide) {
+        // Check if video has valid URL before rendering
+        if (!$this->has_valid_video_url($slide)) {
+            return;
+        }
+
         $video_type = isset($slide['video_type']) ? $slide['video_type'] : 'youtube';
         $autoplay = isset($slide['video_autoplay']) && $slide['video_autoplay'] === 'yes';
         $mute = isset($slide['video_mute']) && $slide['video_mute'] === 'yes';
