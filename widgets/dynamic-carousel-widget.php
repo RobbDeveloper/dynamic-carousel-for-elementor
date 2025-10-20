@@ -578,6 +578,13 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                 ],
                 'default' => 'left',
                 'toggle' => false,
+                'selectors_dictionary' => [
+                    'left' => 'left: var(--arrow-prev-horizontal-offset, 20px); right: auto;',
+                    'right' => 'right: var(--arrow-prev-horizontal-offset, 20px); left: auto;',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-arrow-left' => '{{VALUE}}',
+                ],
                 'condition' => ['show_arrows' => 'yes'],
             ]
         );
@@ -595,7 +602,7 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                 ],
                 'default' => ['unit' => 'px', 'size' => 20],
                 'selectors' => [
-                    '{{WRAPPER}} .carousel-arrow-left' => '{{arrow_prev_h_anchor.VALUE}}: {{SIZE}}{{UNIT}}; right: auto; left: auto;',
+                    '{{WRAPPER}} .dynamic-carousel-wrapper' => '--arrow-prev-horizontal-offset: {{SIZE}}{{UNIT}};',
                 ],
                 'condition' => ['show_arrows' => 'yes'],
             ]
@@ -618,6 +625,13 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                 ],
                 'default' => 'top',
                 'toggle' => false,
+                'selectors_dictionary' => [
+                    'top' => 'top: var(--arrow-prev-vertical-offset, 50%); bottom: auto; --arrow-prev-translate-y: -50%;',
+                    'bottom' => 'bottom: var(--arrow-prev-vertical-offset, 50%); top: auto; --arrow-prev-translate-y: 0%;',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-arrow-left' => '{{VALUE}}',
+                ],
                 'condition' => ['show_arrows' => 'yes'],
             ]
         );
@@ -635,7 +649,7 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                 ],
                 'default' => ['unit' => '%', 'size' => 50],
                 'selectors' => [
-                    '{{WRAPPER}} .carousel-arrow-left' => '{{arrow_prev_v_anchor.VALUE}}: {{SIZE}}{{UNIT}}; top: auto; bottom: auto; transform: translateY(-50%);',
+                    '{{WRAPPER}} .dynamic-carousel-wrapper' => '--arrow-prev-vertical-offset: {{SIZE}}{{UNIT}};',
                 ],
                 'condition' => ['show_arrows' => 'yes'],
             ]
@@ -665,6 +679,13 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                 ],
                 'default' => 'right',
                 'toggle' => false,
+                'selectors_dictionary' => [
+                    'left' => 'left: var(--arrow-next-horizontal-offset, 20px); right: auto;',
+                    'right' => 'right: var(--arrow-next-horizontal-offset, 20px); left: auto;',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-arrow-right' => '{{VALUE}}',
+                ],
                 'condition' => ['show_arrows' => 'yes'],
             ]
         );
@@ -682,7 +703,7 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                 ],
                 'default' => ['unit' => 'px', 'size' => 20],
                 'selectors' => [
-                    '{{WRAPPER}} .carousel-arrow-right' => '{{arrow_next_h_anchor.VALUE}}: {{SIZE}}{{UNIT}}; right: auto; left: auto;',
+                    '{{WRAPPER}} .dynamic-carousel-wrapper' => '--arrow-next-horizontal-offset: {{SIZE}}{{UNIT}};',
                 ],
                 'condition' => ['show_arrows' => 'yes'],
             ]
@@ -705,6 +726,13 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                 ],
                 'default' => 'top',
                 'toggle' => false,
+                'selectors_dictionary' => [
+                    'top' => 'top: var(--arrow-next-vertical-offset, 50%); bottom: auto; --arrow-next-translate-y: -50%;',
+                    'bottom' => 'bottom: var(--arrow-next-vertical-offset, 50%); top: auto; --arrow-next-translate-y: 0%;',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-arrow-right' => '{{VALUE}}',
+                ],
                 'condition' => ['show_arrows' => 'yes'],
             ]
         );
@@ -722,7 +750,7 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                 ],
                 'default' => ['unit' => '%', 'size' => 50],
                 'selectors' => [
-                    '{{WRAPPER}} .carousel-arrow-right' => '{{arrow_next_v_anchor.VALUE}}: {{SIZE}}{{UNIT}}; top: auto; bottom: auto; transform: translateY(-50%);',
+                    '{{WRAPPER}} .dynamic-carousel-wrapper' => '--arrow-next-vertical-offset: {{SIZE}}{{UNIT}};',
                 ],
                 'condition' => ['show_arrows' => 'yes'],
             ]
