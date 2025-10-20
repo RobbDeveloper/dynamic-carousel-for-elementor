@@ -55,8 +55,8 @@ final class Dynamic_Carousel_Elementor {
         // Register Widget Scripts
         add_action('elementor/frontend/after_register_scripts', [$this, 'register_frontend_scripts']);
 
-        // Register Widget Styles
-        add_action('elementor/frontend/after_register_styles', [$this, 'register_frontend_styles']);
+        // Register Widget Styles - use wp_enqueue_scripts to load in head
+        add_action('wp_enqueue_scripts', [$this, 'register_frontend_styles'], 5);
 
         // AJAX handlers for video posters
         add_action('wp_ajax_carousel_upload_video_poster', [$this, 'ajax_upload_video_poster']);

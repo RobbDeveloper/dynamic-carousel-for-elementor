@@ -320,6 +320,17 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             ]
         );
 
+        $repeater->add_control(
+            'video_controls',
+            [
+                'label' => __('Show Video Controls', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SWITCHER,
+                'return_value' => 'yes',
+                'default' => 'yes',
+                'condition' => ['slide_type' => 'video'],
+            ]
+        );
+
         // Template Controls
         $repeater->add_control(
             'template_id',
@@ -1165,6 +1176,7 @@ class Dynamic_Carousel_Widget extends Widget_Base {
         $video_type = isset($slide['video_type']) ? $slide['video_type'] : 'youtube';
         $autoplay = isset($slide['video_autoplay']) && $slide['video_autoplay'] === 'yes';
         $mute = isset($slide['video_mute']) && $slide['video_mute'] === 'yes';
+        $show_controls = isset($slide['video_controls']) && $slide['video_controls'] === 'yes';
 
         // Get video thumbnail/poster
         $poster_url = $this->get_video_poster($slide);
@@ -1190,6 +1202,10 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                                 if ($mute) {
                                     $params[] = 'mute=1';
                                 }
+                            }
+                            // Hide controls for YouTube
+                            if (!$show_controls) {
+                                $params[] = 'controls=0';
                             }
                             if (!empty($params)) {
                                 $embed_url .= '?' . implode('&', $params);
@@ -1227,6 +1243,10 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                                     $params[] = 'muted=1';
                                 }
                             }
+                            // Hide controls for Vimeo
+                            if (!$show_controls) {
+                                $params[] = 'controls=0';
+                            }
                             if (!empty($params)) {
                                 $embed_url .= '?' . implode('&', $params);
                             }
@@ -1259,7 +1279,12 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                     }
 
                     if ($video_url) {
-                        $video_attrs = ['controls', 'class="carousel-video"', 'controlsList="nodownload"', 'preload="metadata"'];
+                        $video_attrs = ['class="carousel-video"', 'controlsList="nodownload"', 'preload="metadata"'];
+
+                        // Add or remove controls attribute
+                        if ($show_controls) {
+                            $video_attrs[] = 'controls';
+                        }
 
                         // Handle poster URL - check if it's a JS generation marker
                         if ($poster_url && strpos($poster_url, 'js-generate:') === 0) {
