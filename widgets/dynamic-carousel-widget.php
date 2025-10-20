@@ -1165,8 +1165,11 @@ class Dynamic_Carousel_Widget extends Widget_Base {
         $video_type = isset($slide['video_type']) ? $slide['video_type'] : 'youtube';
         $autoplay = isset($slide['video_autoplay']) && $slide['video_autoplay'] === 'yes';
         $mute = isset($slide['video_mute']) && $slide['video_mute'] === 'yes';
+
+        // Get video thumbnail/poster
+        $poster_url = $this->get_video_poster($slide);
         ?>
-        <div class="carousel-slide-content carousel-slide-video">
+        <div class="carousel-slide-content carousel-slide-video" <?php if ($poster_url && !$autoplay) : ?>style="background-image: url('<?php echo esc_url($poster_url); ?>'); background-size: cover; background-position: center;"<?php endif; ?>>
             <?php
             switch ($video_type) {
                 case 'youtube':
@@ -1197,7 +1200,8 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                                 frameborder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowfullscreen
-                                class="carousel-video-iframe">
+                                class="carousel-video-iframe"
+                                loading="lazy">
                             </iframe>
                             <?php
                         }
@@ -1232,7 +1236,8 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                                 frameborder="0"
                                 allow="autoplay; fullscreen; picture-in-picture"
                                 allowfullscreen
-                                class="carousel-video-iframe">
+                                class="carousel-video-iframe"
+                                loading="lazy">
                             </iframe>
                             <?php
                         }
@@ -1254,7 +1259,13 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                     }
 
                     if ($video_url) {
-                        $video_attrs = ['controls', 'class="carousel-video"', 'controlsList="nodownload"'];
+                        $video_attrs = ['controls', 'class="carousel-video"', 'controlsList="nodownload"', 'preload="metadata"'];
+
+                        // Add poster attribute for hosted videos
+                        if ($poster_url) {
+                            $video_attrs[] = 'poster="' . esc_url($poster_url) . '"';
+                        }
+
                         if ($autoplay) {
                             $video_attrs[] = 'autoplay';
                             $video_attrs[] = 'loop';
@@ -1275,6 +1286,75 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             ?>
         </div>
         <?php
+    }
+
+    protected function get_video_poster($slide) {
+        $video_type = isset($slide['video_type']) ? $slide['video_type'] : 'youtube';
+
+        switch ($video_type) {
+            case 'youtube':
+                if (!empty($slide['youtube_url'])) {
+                    $youtube_url = $slide['youtube_url'];
+
+                    // Support ACF dynamic tags
+                    if (strpos($youtube_url, '[elementor-') !== false) {
+                        $youtube_url = do_shortcode($youtube_url);
+                    }
+
+                    // Extract YouTube video ID
+                    if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]+)/', $youtube_url, $matches)) {
+                        $video_id = $matches[1];
+                        // YouTube provides multiple thumbnail qualities: default, mqdefault, hqdefault, sddefault, maxresdefault
+                        return 'https://img.youtube.com/vi/' . $video_id . '/maxresdefault.jpg';
+                    }
+                }
+                break;
+
+            case 'vimeo':
+                if (!empty($slide['vimeo_url'])) {
+                    $vimeo_url = $slide['vimeo_url'];
+
+                    // Support ACF dynamic tags
+                    if (strpos($vimeo_url, '[elementor-') !== false) {
+                        $vimeo_url = do_shortcode($vimeo_url);
+                    }
+
+                    // Extract Vimeo video ID
+                    if (preg_match('/vimeo\.com\/(\d+)/', $vimeo_url, $matches)) {
+                        $video_id = $matches[1];
+                        // Fetch Vimeo thumbnail via their API
+                        $vimeo_api_url = 'https://vimeo.com/api/v2/video/' . $video_id . '.json';
+
+                        // Try to get cached thumbnail
+                        $transient_key = 'vimeo_thumb_' . $video_id;
+                        $cached_thumb = get_transient($transient_key);
+
+                        if ($cached_thumb !== false) {
+                            return $cached_thumb;
+                        }
+
+                        // Fetch thumbnail from Vimeo API
+                        $response = wp_remote_get($vimeo_api_url, ['timeout' => 5]);
+                        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+                            $data = json_decode(wp_remote_retrieve_body($response), true);
+                            if (isset($data[0]['thumbnail_large'])) {
+                                $thumbnail = $data[0]['thumbnail_large'];
+                                // Cache for 1 week
+                                set_transient($transient_key, $thumbnail, WEEK_IN_SECONDS);
+                                return $thumbnail;
+                            }
+                        }
+                    }
+                }
+                break;
+
+            case 'hosted':
+                // For hosted videos, we can't easily extract a frame without server-side processing
+                // Return null for now, browser will handle it
+                return null;
+        }
+
+        return null;
     }
 
     protected function render_template_slide($slide) {
