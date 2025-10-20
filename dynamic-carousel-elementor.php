@@ -58,9 +58,11 @@ final class Dynamic_Carousel_Elementor {
         // Register Widget Styles
         add_action('elementor/frontend/after_register_styles', [$this, 'register_frontend_styles']);
 
-        // AJAX handler for uploading video posters
+        // AJAX handlers for video posters
         add_action('wp_ajax_carousel_upload_video_poster', [$this, 'ajax_upload_video_poster']);
         add_action('wp_ajax_nopriv_carousel_upload_video_poster', [$this, 'ajax_upload_video_poster']);
+        add_action('wp_ajax_carousel_check_video_poster', [$this, 'ajax_check_video_poster']);
+        add_action('wp_ajax_nopriv_carousel_check_video_poster', [$this, 'ajax_check_video_poster']);
     }
 
     public function admin_notice_missing_main_plugin() {
@@ -147,6 +149,30 @@ final class Dynamic_Carousel_Elementor {
             return;
         }
 
+        // FIRST: Check if poster already exists - prevent duplicates
+        global $wpdb;
+        $existing_check = $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts}
+            WHERE post_type = 'attachment'
+            AND post_name = %s
+            LIMIT 1",
+            $video_slug . '-poster'
+        );
+
+        $existing_id = $wpdb->get_var($existing_check);
+        if ($existing_id) {
+            $existing_url = wp_get_attachment_url($existing_id);
+            if ($existing_url) {
+                // Poster already exists, return it instead of uploading again
+                wp_send_json_success([
+                    'url' => $existing_url,
+                    'attachment_id' => $existing_id,
+                    'already_existed' => true
+                ]);
+                return;
+            }
+        }
+
         // Handle file upload
         require_once(ABSPATH . 'wp-admin/includes/file.php');
         require_once(ABSPATH . 'wp-admin/includes/media.php');
@@ -195,6 +221,69 @@ final class Dynamic_Carousel_Elementor {
             'url' => $poster_url,
             'attachment_id' => $attachment_id
         ]);
+    }
+
+    public function ajax_check_video_poster() {
+        // Verify nonce
+        check_ajax_referer('carousel_video_poster_nonce', 'nonce');
+
+        $video_slug = sanitize_title($_POST['video_slug'] ?? '');
+        if (empty($video_slug)) {
+            wp_send_json_error(['message' => 'Invalid video slug']);
+            return;
+        }
+
+        // Search for existing poster in media library (match the find_existing_poster logic)
+        global $wpdb;
+        $query = $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts}
+            WHERE post_type = 'attachment'
+            AND (post_mime_type = 'image/webp' OR post_mime_type = 'image/jpeg' OR post_mime_type = 'image/png')
+            AND (post_name = %s OR post_name = %s)
+            ORDER BY ID DESC
+            LIMIT 1",
+            $video_slug . '-poster',
+            $video_slug
+        );
+
+        $attachment_id = $wpdb->get_var($query);
+
+        if ($attachment_id) {
+            $poster_url = wp_get_attachment_url($attachment_id);
+            if ($poster_url) {
+                wp_send_json_success([
+                    'poster_url' => $poster_url,
+                    'attachment_id' => $attachment_id
+                ]);
+                return;
+            }
+        }
+
+        // Also try searching by title as fallback
+        $query = $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts}
+            WHERE post_type = 'attachment'
+            AND (post_mime_type LIKE 'image/%')
+            AND post_title LIKE %s
+            ORDER BY ID DESC
+            LIMIT 1",
+            '%' . $wpdb->esc_like($video_slug) . '%Poster%'
+        );
+
+        $attachment_id = $wpdb->get_var($query);
+
+        if ($attachment_id) {
+            $poster_url = wp_get_attachment_url($attachment_id);
+            if ($poster_url) {
+                wp_send_json_success([
+                    'poster_url' => $poster_url,
+                    'attachment_id' => $attachment_id
+                ]);
+                return;
+            }
+        }
+
+        wp_send_json_error(['message' => 'Poster not found']);
     }
 }
 

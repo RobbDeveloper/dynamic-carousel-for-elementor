@@ -58,21 +58,70 @@
             // Find all video elements that need poster generation
             this.$wrapper.find('video[data-generate-poster]').each((index, videoElement) => {
                 const $video = $(videoElement);
+                const video = videoElement;
+
+                // FIRST: Check if poster attribute already exists
+                if (video.poster && video.poster.trim() !== '') {
+                    // Already has a poster, don't generate
+                    $video.removeAttr('data-generate-poster');
+                    return;
+                }
+
                 const posterData = $video.attr('data-generate-poster');
 
                 if (!posterData) return;
 
                 try {
                     const data = JSON.parse(atob(posterData));
-                    this.generatePosterFromVideo($video, data.video_url, data.video_slug);
+
+                    // Check if poster already exists on server
+                    this.checkPosterExists(data.video_slug, (posterUrl) => {
+                        if (posterUrl) {
+                            // Poster exists, just use it
+                            video.poster = posterUrl;
+                            $video.removeAttr('data-generate-poster');
+                        } else {
+                            // Generate new poster
+                            this.generatePosterFromVideo($video, data.video_url, data.video_slug);
+                        }
+                    });
                 } catch (e) {
                     console.error('Failed to parse poster data:', e);
                 }
             });
         }
 
+        checkPosterExists(videoSlug, callback) {
+            // Check if poster already exists in media library
+            $.ajax({
+                url: carouselAjax?.ajaxurl || '/wp-admin/admin-ajax.php',
+                type: 'POST',
+                data: {
+                    action: 'carousel_check_video_poster',
+                    video_slug: videoSlug,
+                    nonce: carouselAjax?.nonce || ''
+                },
+                success: (response) => {
+                    if (response.success && response.data.poster_url) {
+                        callback(response.data.poster_url);
+                    } else {
+                        callback(null);
+                    }
+                },
+                error: () => {
+                    callback(null);
+                }
+            });
+        }
+
         generatePosterFromVideo($video, videoUrl, videoSlug) {
             const video = $video[0];
+
+            // Check if already generating (prevent duplicate generation)
+            if ($video.data('generating-poster')) {
+                return;
+            }
+            $video.data('generating-poster', true);
 
             // Wait for video metadata to load
             const handleLoadedMetadata = () => {
@@ -95,8 +144,16 @@
                         const posterUrl = URL.createObjectURL(blob);
                         video.poster = posterUrl;
 
-                        // Optional: Upload to server via AJAX
-                        this.uploadPosterToServer(blob, videoSlug, videoUrl);
+                        // Upload to server via AJAX (only once)
+                        this.uploadPosterToServer(blob, videoSlug, videoUrl, (uploadedUrl) => {
+                            if (uploadedUrl) {
+                                // Replace blob URL with permanent URL
+                                video.poster = uploadedUrl;
+                                // Remove data attribute so it doesn't generate again
+                                $video.removeAttr('data-generate-poster');
+                                $video.data('generating-poster', false);
+                            }
+                        });
                     }
                 }, 'image/webp', 0.85);
 
@@ -113,7 +170,7 @@
             video.load();
         }
 
-        uploadPosterToServer(blob, videoSlug, videoUrl) {
+        uploadPosterToServer(blob, videoSlug, videoUrl, callback) {
             // Create FormData for upload
             const formData = new FormData();
             formData.append('action', 'carousel_upload_video_poster');
@@ -130,12 +187,16 @@
                 processData: false,
                 contentType: false,
                 success: (response) => {
-                    if (response.success) {
+                    if (response.success && response.data.url) {
                         console.log('Poster uploaded successfully:', response.data.url);
+                        if (callback) callback(response.data.url);
+                    } else {
+                        if (callback) callback(null);
                     }
                 },
                 error: (xhr, status, error) => {
                     console.error('Failed to upload poster:', error);
+                    if (callback) callback(null);
                 }
             });
         }

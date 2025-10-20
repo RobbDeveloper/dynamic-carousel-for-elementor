@@ -1355,16 +1355,19 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             case 'hosted':
                 $video_url = '';
 
-                if (!empty($slide['hosted_video']['url'])) {
-                    $video_url = $slide['hosted_video']['url'];
-                } elseif (!empty($slide['hosted_video_url'])) {
-                    $video_url = $slide['hosted_video_url'];
-                }
 
                 // Support ACF dynamic tags
                 if ($video_url && strpos($video_url, '[elementor-') !== false) {
                     $video_url = do_shortcode($video_url);
+                } else {
+                    if (!empty($slide['hosted_video']['url'])) {
+                        $video_url = $slide['hosted_video']['url'];
+                    } elseif (!empty($slide['hosted_video_url'])) {
+                        $video_url = $slide['hosted_video_url'];
+                    }
                 }
+                
+                
 
                 if ($video_url) {
                     return $this->get_hosted_video_poster($video_url);
@@ -1376,9 +1379,13 @@ class Dynamic_Carousel_Widget extends Widget_Base {
     }
 
     protected function get_hosted_video_poster($video_url) {
-        // Create a unique slug from the video URL
-        $video_slug = sanitize_title(basename(parse_url($video_url, PHP_URL_PATH)));
-        $video_slug = preg_replace('/\.(mp4|mov|avi|wmv|flv|webm)$/i', '', $video_slug);
+        // Create a unique slug from the video URL - KEEP the extension in the slug
+        // This matches what JavaScript does with the filename
+        $video_filename = basename(parse_url($video_url, PHP_URL_PATH));
+        $video_slug = sanitize_title($video_filename);
+
+        // Remove the actual extension part for cleaner slug (e.g., "video-mp4" not "video.mp4")
+        $video_slug = str_replace('.', '-', $video_slug);
 
         // Check if poster image already exists in media library
         $existing_poster = $this->find_existing_poster($video_slug);
@@ -1415,13 +1422,36 @@ class Dynamic_Carousel_Widget extends Widget_Base {
         global $wpdb;
 
         // Search for media with matching slug and webp extension
+        // Try both with and without '-poster' suffix for compatibility
         $query = $wpdb->prepare(
             "SELECT ID FROM {$wpdb->posts}
             WHERE post_type = 'attachment'
-            AND post_mime_type = 'image/webp'
-            AND post_name = %s
+            AND (post_mime_type = 'image/webp' OR post_mime_type = 'image/jpeg' OR post_mime_type = 'image/png')
+            AND (post_name = %s OR post_name = %s)
+            ORDER BY ID DESC
             LIMIT 1",
-            $video_slug . '-poster'
+            $video_slug . '-poster',
+            $video_slug
+        );
+
+        $attachment_id = $wpdb->get_var($query);
+
+        if ($attachment_id) {
+            $image_url = wp_get_attachment_url($attachment_id);
+            if ($image_url) {
+                return $image_url;
+            }
+        }
+
+        // Also try searching by title as fallback
+        $query = $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts}
+            WHERE post_type = 'attachment'
+            AND (post_mime_type LIKE 'image/%')
+            AND post_title LIKE %s
+            ORDER BY ID DESC
+            LIMIT 1",
+            '%' . $wpdb->esc_like($video_slug) . '%Poster%'
         );
 
         $attachment_id = $wpdb->get_var($query);
