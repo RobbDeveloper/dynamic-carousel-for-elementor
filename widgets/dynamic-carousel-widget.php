@@ -554,21 +554,183 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             ]
         );
 
+        $this->start_controls_tabs('arrows_position_tabs');
+
+        $this->start_controls_tab('previous_arrow_position_tab', [
+            'label' => __('Previous', 'elementor-custom-widgets'),
+            'condition' => ['show_arrows' => 'yes'],
+        ]);
+
         $this->add_responsive_control(
-            'arrows_position',
+            'arrow_prev_h_anchor',
             [
-                'label' => __('Arrow Position', 'elementor-custom-widgets'),
+                'label' => __('Horizontal Anchor', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::CHOOSE,
+                'options' => [
+                    'left' => [
+                        'title' => __('Left', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-h-align-left',
+                    ],
+                    'right' => [
+                        'title' => __('Right', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-h-align-right',
+                    ],
+                ],
+                'default' => 'left',
+                'toggle' => false,
+                'condition' => ['show_arrows' => 'yes'],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'arrow_prev_x',
+            [
+                'label' => __('Horizontal Offset', 'elementor-custom-widgets'),
                 'type' => Controls_Manager::SLIDER,
-                'size_units' => ['px'],
-                'range' => ['px' => ['min' => -100, 'max' => 100]],
+                'size_units' => ['px', '%', 'vw'],
+                'range' => [
+                    'px' => ['min' => -500, 'max' => 500, 'step' => 1],
+                    '%' => ['min' => -100, 'max' => 100, 'step' => 1],
+                    'vw' => ['min' => -100, 'max' => 100, 'step' => 1],
+                ],
                 'default' => ['unit' => 'px', 'size' => 20],
                 'selectors' => [
-                    '{{WRAPPER}} .carousel-arrow-left' => 'left: {{SIZE}}{{UNIT}};',
-                    '{{WRAPPER}} .carousel-arrow-right' => 'right: {{SIZE}}{{UNIT}};',
+                    '{{WRAPPER}} .carousel-arrow-left' => '{{arrow_prev_h_anchor.VALUE}}: {{SIZE}}{{UNIT}}; right: auto; left: auto;',
                 ],
                 'condition' => ['show_arrows' => 'yes'],
             ]
         );
+
+        $this->add_responsive_control(
+            'arrow_prev_v_anchor',
+            [
+                'label' => __('Vertical Anchor', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::CHOOSE,
+                'options' => [
+                    'top' => [
+                        'title' => __('Top', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-v-align-top',
+                    ],
+                    'bottom' => [
+                        'title' => __('Bottom', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-v-align-bottom',
+                    ],
+                ],
+                'default' => 'top',
+                'toggle' => false,
+                'condition' => ['show_arrows' => 'yes'],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'arrow_prev_y',
+            [
+                'label' => __('Vertical Offset', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'vh'],
+                'range' => [
+                    'px' => ['min' => -500, 'max' => 500, 'step' => 1],
+                    '%' => ['min' => -100, 'max' => 100, 'step' => 1],
+                    'vh' => ['min' => -100, 'max' => 100, 'step' => 1],
+                ],
+                'default' => ['unit' => '%', 'size' => 50],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-arrow-left' => '{{arrow_prev_v_anchor.VALUE}}: {{SIZE}}{{UNIT}}; top: auto; bottom: auto; transform: translateY(-50%);',
+                ],
+                'condition' => ['show_arrows' => 'yes'],
+            ]
+        );
+
+        $this->end_controls_tab();
+
+        $this->start_controls_tab('next_arrow_position_tab', [
+            'label' => __('Next', 'elementor-custom-widgets'),
+            'condition' => ['show_arrows' => 'yes'],
+        ]);
+
+        $this->add_responsive_control(
+            'arrow_next_h_anchor',
+            [
+                'label' => __('Horizontal Anchor', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::CHOOSE,
+                'options' => [
+                    'left' => [
+                        'title' => __('Left', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-h-align-left',
+                    ],
+                    'right' => [
+                        'title' => __('Right', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-h-align-right',
+                    ],
+                ],
+                'default' => 'right',
+                'toggle' => false,
+                'condition' => ['show_arrows' => 'yes'],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'arrow_next_x',
+            [
+                'label' => __('Horizontal Offset', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'vw'],
+                'range' => [
+                    'px' => ['min' => -500, 'max' => 500, 'step' => 1],
+                    '%' => ['min' => -100, 'max' => 100, 'step' => 1],
+                    'vw' => ['min' => -100, 'max' => 100, 'step' => 1],
+                ],
+                'default' => ['unit' => 'px', 'size' => 20],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-arrow-right' => '{{arrow_next_h_anchor.VALUE}}: {{SIZE}}{{UNIT}}; right: auto; left: auto;',
+                ],
+                'condition' => ['show_arrows' => 'yes'],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'arrow_next_v_anchor',
+            [
+                'label' => __('Vertical Anchor', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::CHOOSE,
+                'options' => [
+                    'top' => [
+                        'title' => __('Top', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-v-align-top',
+                    ],
+                    'bottom' => [
+                        'title' => __('Bottom', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-v-align-bottom',
+                    ],
+                ],
+                'default' => 'top',
+                'toggle' => false,
+                'condition' => ['show_arrows' => 'yes'],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'arrow_next_y',
+            [
+                'label' => __('Vertical Offset', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%', 'vh'],
+                'range' => [
+                    'px' => ['min' => -500, 'max' => 500, 'step' => 1],
+                    '%' => ['min' => -100, 'max' => 100, 'step' => 1],
+                    'vh' => ['min' => -100, 'max' => 100, 'step' => 1],
+                ],
+                'default' => ['unit' => '%', 'size' => 50],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-arrow-right' => '{{arrow_next_v_anchor.VALUE}}: {{SIZE}}{{UNIT}}; top: auto; bottom: auto; transform: translateY(-50%);',
+                ],
+                'condition' => ['show_arrows' => 'yes'],
+            ]
+        );
+
+        $this->end_controls_tab();
+
+        $this->end_controls_tabs();
 
         $this->start_controls_tabs('arrows_style_tabs');
 
