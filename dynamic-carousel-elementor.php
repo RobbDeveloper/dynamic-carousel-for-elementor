@@ -283,6 +283,52 @@ final class Dynamic_Carousel_Elementor {
             }
         }
 
+        // Third fallback: Search by GUID (full URL path)
+        $query = $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts}
+            WHERE post_type = 'attachment'
+            AND (post_mime_type LIKE 'image/%')
+            AND guid LIKE %s
+            ORDER BY ID DESC
+            LIMIT 1",
+            '%' . $wpdb->esc_like($video_slug) . '%poster%'
+        );
+
+        $attachment_id = $wpdb->get_var($query);
+
+        if ($attachment_id) {
+            $poster_url = wp_get_attachment_url($attachment_id);
+            if ($poster_url) {
+                wp_send_json_success([
+                    'poster_url' => $poster_url,
+                    'attachment_id' => $attachment_id
+                ]);
+                return;
+            }
+        }
+
+        // Fourth fallback: Try using attachment_metadata to search filename
+        $query = $wpdb->prepare(
+            "SELECT post_id FROM {$wpdb->postmeta}
+            WHERE meta_key = '_wp_attached_file'
+            AND meta_value LIKE %s
+            LIMIT 1",
+            '%' . $wpdb->esc_like($video_slug) . '%poster%'
+        );
+
+        $attachment_id = $wpdb->get_var($query);
+
+        if ($attachment_id) {
+            $poster_url = wp_get_attachment_url($attachment_id);
+            if ($poster_url) {
+                wp_send_json_success([
+                    'poster_url' => $poster_url,
+                    'attachment_id' => $attachment_id
+                ]);
+                return;
+            }
+        }
+
         wp_send_json_error(['message' => 'Poster not found']);
     }
 }

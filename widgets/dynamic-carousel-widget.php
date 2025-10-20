@@ -1463,6 +1463,44 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             }
         }
 
+        // Third fallback: Search by GUID (full URL path)
+        $query = $wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts}
+            WHERE post_type = 'attachment'
+            AND (post_mime_type LIKE 'image/%')
+            AND guid LIKE %s
+            ORDER BY ID DESC
+            LIMIT 1",
+            '%' . $wpdb->esc_like($video_slug) . '%poster%'
+        );
+
+        $attachment_id = $wpdb->get_var($query);
+
+        if ($attachment_id) {
+            $image_url = wp_get_attachment_url($attachment_id);
+            if ($image_url) {
+                return $image_url;
+            }
+        }
+
+        // Fourth fallback: Try using attachment_metadata to search filename
+        $query = $wpdb->prepare(
+            "SELECT post_id FROM {$wpdb->postmeta}
+            WHERE meta_key = '_wp_attached_file'
+            AND meta_value LIKE %s
+            LIMIT 1",
+            '%' . $wpdb->esc_like($video_slug) . '%poster%'
+        );
+
+        $attachment_id = $wpdb->get_var($query);
+
+        if ($attachment_id) {
+            $image_url = wp_get_attachment_url($attachment_id);
+            if ($image_url) {
+                return $image_url;
+            }
+        }
+
         return null;
     }
 
