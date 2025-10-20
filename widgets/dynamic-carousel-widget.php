@@ -1054,12 +1054,35 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                         ];
                     }
                 }
+            } elseif ($slide['slide_type'] === 'video') {
+                // Only add video slide if it has a valid URL
+                if ($this->has_valid_video_url($slide)) {
+                    $processed_slides[] = $slide;
+                }
             } else {
                 $processed_slides[] = $slide;
             }
         }
 
         return $processed_slides;
+    }
+
+    protected function has_valid_video_url($slide) {
+        $video_type = isset($slide['video_type']) ? $slide['video_type'] : 'youtube';
+
+        switch ($video_type) {
+            case 'youtube':
+                return !empty($slide['youtube_url']);
+
+            case 'vimeo':
+                return !empty($slide['vimeo_url']);
+
+            case 'hosted':
+                return !empty($slide['hosted_video']['url']) || !empty($slide['hosted_video_url']);
+
+            default:
+                return false;
+        }
     }
 
     protected function get_acf_gallery_images($slide) {
