@@ -663,13 +663,20 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             ]
         );
 
-        $this->add_control(
+        $this->add_responsive_control(
             'show_pagination',
             [
                 'label' => __('Show Pagination', 'elementor-custom-widgets'),
                 'type' => Controls_Manager::SWITCHER,
                 'return_value' => 'yes',
                 'default' => 'yes',
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination' => 'display: {{VALUE}} !important;',
+                ],
+                'selectors_dictionary' => [
+                    'yes' => 'flex',
+                    '' => 'none',
+                ],
             ]
         );
 
@@ -1022,16 +1029,14 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                 </div>
             <?php endif; ?>
             
-            <?php if ($settings['show_pagination'] === 'yes') : ?>
-                <div class="carousel-pagination">
-                    <?php foreach ($processed_slides as $index => $slide) : ?>
-                        <button class="carousel-dot <?php echo $index === 0 ? 'active' : ''; ?>" 
-                                data-slide-index="<?php echo esc_attr($index); ?>"
-                                aria-label="<?php echo esc_attr(sprintf(__('Go to slide %d', 'elementor-custom-widgets'), $index + 1)); ?>">
-                        </button>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+            <div class="carousel-pagination">
+                <?php foreach ($processed_slides as $index => $slide) : ?>
+                    <button class="carousel-dot <?php echo $index === 0 ? 'active' : ''; ?>"
+                            data-slide-index="<?php echo esc_attr($index); ?>"
+                            aria-label="<?php echo esc_attr(sprintf(__('Go to slide %d', 'elementor-custom-widgets'), $index + 1)); ?>">
+                    </button>
+                <?php endforeach; ?>
+            </div>
         </div>
         <?php
     }
