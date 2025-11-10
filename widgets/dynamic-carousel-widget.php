@@ -331,6 +331,17 @@ class Dynamic_Carousel_Widget extends Widget_Base {
             ]
         );
 
+        $repeater->add_control(
+            'video_poster',
+            [
+                'label' => __('Custom Poster Image', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::MEDIA,
+                'dynamic' => ['active' => true],
+                'description' => __('Optional: Use a custom poster image instead of auto-generated frame', 'elementor-custom-widgets'),
+                'condition' => ['slide_type' => 'video'],
+            ]
+        );
+
         // Template Controls
         $repeater->add_control(
             'template_id',
@@ -1513,6 +1524,46 @@ class Dynamic_Carousel_Widget extends Widget_Base {
     }
 
     protected function get_video_poster($slide) {
+        // Allow users to override poster generation with a custom image
+        if (!empty($slide['video_poster'])) {
+            $custom_poster = $slide['video_poster'];
+
+            if (is_array($custom_poster)) {
+                if (!empty($custom_poster['id'])) {
+                    $poster_url = wp_get_attachment_url($custom_poster['id']);
+                    if ($poster_url) {
+                        return $poster_url;
+                    }
+                }
+
+                if (!empty($custom_poster['url'])) {
+                    $poster_url = $custom_poster['url'];
+                    if (strpos($poster_url, '[elementor-') !== false) {
+                        $poster_url = do_shortcode($poster_url);
+                    }
+                    if (!empty($poster_url)) {
+                        return $poster_url;
+                    }
+                }
+            } elseif (is_string($custom_poster)) {
+                $custom_poster = trim($custom_poster);
+                if ($custom_poster !== '') {
+                    if (strpos($custom_poster, '[elementor-') !== false) {
+                        $custom_poster = do_shortcode($custom_poster);
+                    } elseif (is_numeric($custom_poster)) {
+                        $poster_url = wp_get_attachment_url((int) $custom_poster);
+                        if ($poster_url) {
+                            return $poster_url;
+                        }
+                    }
+
+                    if (!empty($custom_poster)) {
+                        return $custom_poster;
+                    }
+                }
+            }
+        }
+
         $video_type = isset($slide['video_type']) ? $slide['video_type'] : 'youtube';
 
         switch ($video_type) {
