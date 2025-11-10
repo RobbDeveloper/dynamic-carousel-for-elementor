@@ -994,6 +994,307 @@ class Dynamic_Carousel_Widget extends Widget_Base {
 
         $this->end_controls_section();
 
+        // Pagination Counter
+        $this->start_controls_section(
+            'section_pagination_counter_style',
+            [
+                'label' => __('Pagination Counter', 'elementor-custom-widgets'),
+                'tab' => Controls_Manager::TAB_STYLE,
+            ]
+        );
+
+        $this->add_control(
+            'show_pagination_counter',
+            [
+                'label' => __('Enable Pagination Counter', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SWITCHER,
+                'return_value' => 'yes',
+                'default' => '',
+            ]
+        );
+
+        $this->add_group_control(
+            Group_Control_Typography::get_type(),
+            [
+                'name' => 'pagination_counter_typography',
+                'selector' => '{{WRAPPER}} .carousel-pagination-counter',
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'pagination_counter_color',
+            [
+                'label' => __('Text Color', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::COLOR,
+                'default' => '#ffffff',
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination-counter' => 'color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_control(
+            'pagination_counter_background',
+            [
+                'label' => __('Background Color', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::COLOR,
+                'default' => 'rgba(0, 0, 0, 0.75)',
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination-counter' => 'background-color: {{VALUE}};',
+                ],
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            Group_Control_Border::get_type(),
+            [
+                'name' => 'pagination_counter_border',
+                'selector' => '{{WRAPPER}} .carousel-pagination-counter',
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'pagination_counter_border_radius',
+            [
+                'label' => __('Border Radius', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', '%'],
+                'default' => [
+                    'top' => 999,
+                    'right' => 999,
+                    'bottom' => 999,
+                    'left' => 999,
+                    'unit' => 'px',
+                    'isLinked' => true,
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination-counter' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'pagination_counter_padding',
+            [
+                'label' => __('Padding', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::DIMENSIONS,
+                'size_units' => ['px', 'em', 'rem'],
+                'default' => [
+                    'top' => 8,
+                    'right' => 14,
+                    'bottom' => 8,
+                    'left' => 14,
+                    'unit' => 'px',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination-counter' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_group_control(
+            Group_Control_Box_Shadow::get_type(),
+            [
+                'name' => 'pagination_counter_box_shadow',
+                'selector' => '{{WRAPPER}} .carousel-pagination-counter',
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'pagination_counter_z_index',
+            [
+                'label' => __('Z-Index', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::NUMBER,
+                'min' => 0,
+                'max' => 50,
+                'default' => 12,
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination-counter' => 'z-index: {{VALUE}};',
+                ],
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'pagination_counter_horizontal_position',
+            [
+                'label' => __('Horizontal Position', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::CHOOSE,
+                'options' => [
+                    'left' => [
+                        'title' => __('Left', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-h-align-left',
+                    ],
+                    'center' => [
+                        'title' => __('Center', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-h-align-center',
+                    ],
+                    'right' => [
+                        'title' => __('Right', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-h-align-right',
+                    ],
+                ],
+                'default' => 'right',
+                'selectors_dictionary' => [
+                    'left' => 'left: calc(var(--pagination-counter-offset-x, 20px)); right: auto; --pagination-counter-translate-x: 0;',
+                    'center' => 'left: 50%; right: auto; --pagination-counter-translate-x: calc(-50% + var(--pagination-counter-offset-x, 0px));',
+                    'right' => 'right: calc(var(--pagination-counter-offset-x, 20px)); left: auto; --pagination-counter-translate-x: 0;',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination-counter' => '{{VALUE}}',
+                ],
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'pagination_counter_horizontal_offset',
+            [
+                'label' => __('Horizontal Offset', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%'],
+                'range' => [
+                    'px' => ['min' => -300, 'max' => 300],
+                    '%' => ['min' => -100, 'max' => 100],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination-counter' => '--pagination-counter-offset-x: {{SIZE}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'pagination_counter_vertical_position',
+            [
+                'label' => __('Vertical Position', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::CHOOSE,
+                'options' => [
+                    'top' => [
+                        'title' => __('Top', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-v-align-top',
+                    ],
+                    'center' => [
+                        'title' => __('Center', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-v-align-middle',
+                    ],
+                    'bottom' => [
+                        'title' => __('Bottom', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-v-align-bottom',
+                    ],
+                ],
+                'default' => 'top',
+                'selectors_dictionary' => [
+                    'top' => 'top: calc(var(--pagination-counter-offset-y, 20px)); bottom: auto; --pagination-counter-translate-y: 0;',
+                    'center' => 'top: 50%; bottom: auto; --pagination-counter-translate-y: calc(-50% + var(--pagination-counter-offset-y, 0px));',
+                    'bottom' => 'bottom: calc(var(--pagination-counter-offset-y, 20px)); top: auto; --pagination-counter-translate-y: 0;',
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination-counter' => '{{VALUE}}',
+                ],
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'pagination_counter_vertical_offset',
+            [
+                'label' => __('Vertical Offset', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', '%'],
+                'range' => [
+                    'px' => ['min' => -300, 'max' => 300],
+                    '%' => ['min' => -100, 'max' => 100],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination-counter' => '--pagination-counter-offset-y: {{SIZE}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'pagination_counter_min_width',
+            [
+                'label' => __('Min Width', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::SLIDER,
+                'size_units' => ['px', 'em', '%'],
+                'range' => [
+                    'px' => ['min' => 0, 'max' => 400],
+                    'em' => ['min' => 0, 'max' => 25],
+                    '%' => ['min' => 0, 'max' => 100],
+                ],
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination-counter' => 'min-width: {{SIZE}}{{UNIT}};',
+                ],
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->add_responsive_control(
+            'pagination_counter_alignment',
+            [
+                'label' => __('Content Alignment', 'elementor-custom-widgets'),
+                'type' => Controls_Manager::CHOOSE,
+                'options' => [
+                    'flex-start' => [
+                        'title' => __('Start', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-text-align-left',
+                    ],
+                    'center' => [
+                        'title' => __('Center', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-text-align-center',
+                    ],
+                    'flex-end' => [
+                        'title' => __('End', 'elementor-custom-widgets'),
+                        'icon' => 'eicon-text-align-right',
+                    ],
+                ],
+                'default' => 'center',
+                'selectors' => [
+                    '{{WRAPPER}} .carousel-pagination-counter' => 'justify-content: {{VALUE}};',
+                ],
+                'condition' => [
+                    'show_pagination_counter' => 'yes',
+                ],
+            ]
+        );
+
+        $this->end_controls_section();
+
         // Slide Style
         $this->start_controls_section(
             'section_slide_style',
@@ -1047,6 +1348,11 @@ class Dynamic_Carousel_Widget extends Widget_Base {
         ];
 
         $processed_slides = $this->process_slides($slides, $settings);
+        $total_slides = count($processed_slides);
+
+        if ($total_slides === 0) {
+            return;
+        }
 
         // Check if mobile full width is enabled
         $mobile_full_width = isset($settings['mobile_full_width']) && $settings['mobile_full_width'] === 'yes';
@@ -1156,7 +1462,7 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                         $slide_styles = [];
                         $slide_styles[] = 'aspect-ratio: ' . $aspect_ratio_value;
 
-                        if ($index < count($processed_slides) - 1) {
+                        if ($index < $total_slides - 1) {
                             $slide_styles[] = 'margin-right: ' . $slide_spacing['size'] . $slide_spacing['unit'];
                         }
 
@@ -1238,6 +1544,14 @@ class Dynamic_Carousel_Widget extends Widget_Base {
                     </button>
                 <?php endforeach; ?>
             </div>
+
+            <?php if (isset($settings['show_pagination_counter']) && $settings['show_pagination_counter'] === 'yes') : ?>
+                <div class="carousel-pagination-counter" aria-live="polite" aria-atomic="true">
+                    <span class="pagination-counter-current">1</span>
+                    <span class="pagination-counter-separator">/</span>
+                    <span class="pagination-counter-total"><?php echo esc_html($total_slides); ?></span>
+                </div>
+            <?php endif; ?>
         </div>
         <?php
     }

@@ -178,6 +178,47 @@
     transition: all 0.3s ease;
 }
 
+.carousel-pagination-counter {
+    --pagination-counter-offset-x: 20px;
+    --pagination-counter-offset-y: 20px;
+    --pagination-counter-translate-x: 0;
+    --pagination-counter-translate-y: 0;
+    position: absolute;
+    top: var(--pagination-counter-offset-y, 20px);
+    right: var(--pagination-counter-offset-x, 20px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35em;
+    min-width: 48px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.75);
+    pointer-events: none;
+    z-index: 12;
+    transform: translate(var(--pagination-counter-translate-x, 0), var(--pagination-counter-translate-y, 0));
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.carousel-pagination-counter .pagination-counter-separator {
+    opacity: 0.7;
+    margin: 0 2px;
+}
+
+.carousel-pagination-counter .pagination-counter-current,
+.carousel-pagination-counter .pagination-counter-total {
+    display: inline-flex;
+    align-items: center;
+}
+
 /* Touch/Drag Functionality */
 .dynamic-carousel-wrapper.grabbing {
     cursor: grabbing;

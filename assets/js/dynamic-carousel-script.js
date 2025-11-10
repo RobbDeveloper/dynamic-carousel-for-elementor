@@ -15,6 +15,9 @@
             this.$prevBtn = this.$wrapper.find('.carousel-arrow-left');
             this.$nextBtn = this.$wrapper.find('.carousel-arrow-right');
             this.$dots = this.$wrapper.find('.carousel-dot');
+            this.$counter = this.$wrapper.find('.carousel-pagination-counter');
+            this.$counterCurrent = this.$counter.find('.pagination-counter-current');
+            this.$counterTotal = this.$counter.find('.pagination-counter-total');
             
             this.settings = this.$wrapper.data('settings') || {};
             this.currentIndex = 0;
@@ -367,6 +370,18 @@
         }
 
         updateCarousel(animate = true) {
+            const totalSlides = this.$slides.length;
+
+            if (!totalSlides) {
+                return;
+            }
+
+            if (this.currentIndex >= totalSlides) {
+                this.currentIndex = totalSlides - 1;
+            } else if (this.currentIndex < 0) {
+                this.currentIndex = 0;
+            }
+
             const slidePosition = this.slidePositions[this.currentIndex];
 
             if (!slidePosition) return;
@@ -403,6 +418,8 @@
             this.$dots.removeClass('active');
             this.$dots.eq(this.currentIndex).addClass('active');
 
+            this.updatePaginationCounter();
+
             // Update button states
             this.updateButtonStates();
         }
@@ -427,6 +444,25 @@
                 this.$prevBtn.prop('disabled', false);
                 this.$nextBtn.prop('disabled', false);
             }
+        }
+
+        updatePaginationCounter() {
+            if (!this.$counter.length) {
+                return;
+            }
+
+            const totalSlides = this.$slides.length;
+
+            if (!totalSlides) {
+                this.$counterCurrent.text('0');
+                this.$counterTotal.text('0');
+                return;
+            }
+
+            const visibleIndex = Math.min(Math.max(this.currentIndex, 0), totalSlides - 1);
+
+            this.$counterCurrent.text(visibleIndex + 1);
+            this.$counterTotal.text(totalSlides);
         }
 
         startAutoplay() {
